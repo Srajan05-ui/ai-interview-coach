@@ -1,82 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import DashboardCard from "@/components/DashboardCard";
 import SkillBadge from "@/components/SkillBadge";
 import ProgressBar from "@/components/ProgressBar";
 
 export default function Home() {
-  const router = useRouter();
-
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const handleResumeUpload = async () => {
-    if (!resumeFile) {
-      alert("Please select a resume file first.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const formData = new FormData();
-      formData.append("resume", resumeFile);
-
-      const uploadResponse = await fetch("/api/upload-resume", {
-        method: "POST",
-        body: formData,
-      });
-
-      const uploadData = await uploadResponse.json();
-
-      const resumeText =
-        uploadData.resumeText || uploadData.text || uploadData.extractedText;
-
-      if (!resumeText) {
-        alert("Resume text could not be extracted.");
-        return;
-      }
-
-      const analysisResponse = await fetch("/api/resume-analysis", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          resumeText: resumeText,
-        }),
-      });
-
-      const analysisData = await analysisResponse.json();
-
-      localStorage.setItem("resumeAnalysis", JSON.stringify(analysisData));
-
-      const questionResponse = await fetch("/api/generate-questions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          skills: analysisData.skills || [],
-        }),
-      });
-
-      const questionData = await questionResponse.json();
-
-      localStorage.setItem("interviewQuestions", JSON.stringify(questionData));
-
-      router.push("/resume-analysis");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Something went wrong while uploading resume.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const router = useRouter();
 
   return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
@@ -120,22 +55,62 @@ export default function Home() {
             <input
               type="file"
               accept=".pdf,.doc,.docx"
-              onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
               className="w-full text-sm text-gray-300 mb-6"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setFile(e.target.files[0]);
+                }
+              }}
             />
 
-            {resumeFile && (
+            {file && (
               <p className="text-sm text-cyan-300 mb-4">
-                Selected File: {resumeFile.name}
+                Selected File: {file.name}
               </p>
             )}
 
             <button
-              onClick={handleResumeUpload}
+              onClick={async () => {
+                if (!file) {
+                  alert("Please select a resume file");
+                  return;
+                }
+
+                setLoading(true);
+
+                try {
+                  const formData = new FormData();
+                  formData.append("file", file);
+
+                  const response = await fetch("/api/upload-resume", {
+                    method: "POST",
+                    body: formData,
+                  });
+
+                  const data = await response.json();
+
+                  console.log(data);
+
+                  if (!data.success) {
+                    alert(data.error || "Upload failed");
+                    setLoading(false);
+                    return;
+                  }
+
+                  localStorage.setItem("resumeText", data.extractedText);
+
+                  router.push("/resume-analysis");
+                } catch (error) {
+                  console.error(error);
+                  alert("Upload failed");
+                }
+
+                setLoading(false);
+              }}
               disabled={loading}
-              className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
+              className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
             >
-              {loading ? "Analyzing Resume..." : "Upload Resume"}
+              {loading ? "Uploading..." : "Upload Resume"}
             </button>
           </div>
 
@@ -165,6 +140,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5">
             <h3 className="font-semibold mb-4">Top Skills</h3>
+
             <div className="flex flex-wrap gap-2">
               <SkillBadge skill="React" />
               <SkillBadge skill="Next.js" />
@@ -175,6 +151,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5">
             <p className="text-gray-400 text-sm">Recommended Role</p>
+
             <h3 className="text-2xl font-bold mt-2">
               Based on uploaded resume
             </h3>
@@ -182,6 +159,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <h3 className="font-semibold mb-5">Interview Readiness</h3>
+
             <ProgressBar label="Technical" value={90} />
             <ProgressBar label="Communication" value={75} />
             <ProgressBar label="Confidence" value={82} />
