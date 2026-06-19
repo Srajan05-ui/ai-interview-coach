@@ -12,6 +12,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
   return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-blue-500/20 blur-[130px]" />
@@ -34,8 +35,8 @@ export default function Home() {
             </h1>
 
             <p className="text-gray-400 text-lg max-w-2xl">
-              Get personalized interview questions, instant feedback, and a
-              roadmap to improve your skills.
+              Upload your resume, get AI-powered analysis, generate interview
+              questions, and improve with a personalized roadmap.
             </p>
 
             <p className="mt-4 inline-block rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm text-gray-300">
@@ -47,66 +48,70 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-4">📄 Upload Resume</h2>
 
             <p className="text-gray-400 mb-6">
-              Upload your resume to let MockMate AI generate a personalized
-              mock interview experience.
+              Select your PDF, DOC, or DOCX resume to start the MockMate AI
+              interview flow.
             </p>
 
             <input
-  type="file"
-  accept=".pdf,.doc,.docx"
-  className="w-full text-sm text-gray-300 mb-6"
-  onChange={(e) => {
-    if (e.target.files?.[0]) {
-      setFile(e.target.files[0]);
-    }
-  }}
-/>
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="w-full text-sm text-gray-300 mb-6"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setFile(e.target.files[0]);
+                }
+              }}
+            />
 
-<button
-  onClick={async () => {
-    if (!file) {
-      alert("Please select a resume file");
-      return;
-    }
+            {file && (
+              <p className="text-sm text-cyan-300 mb-4">
+                Selected File: {file.name}
+              </p>
+            )}
 
-    setLoading(true);
+            <button
+              onClick={async () => {
+                if (!file) {
+                  alert("Please select a resume file");
+                  return;
+                }
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+                setLoading(true);
 
-      const response = await fetch("/api/upload-resume", {
-        method: "POST",
-        body: formData,
-      });
+                try {
+                  const formData = new FormData();
+                  formData.append("file", file);
 
-      const data = await response.json();
+                  const response = await fetch("/api/upload-resume", {
+                    method: "POST",
+                    body: formData,
+                  });
 
-      console.log(data);
+                  const data = await response.json();
 
-      if (!data.success) {
-        alert(data.error || "Upload failed");
-        setLoading(false);
-        return;
-      }
+                  console.log(data);
 
-      localStorage.setItem(
-        "resumeText",
-        data.extractedText
-      );
+                  if (!data.success) {
+                    alert(data.error || "Upload failed");
+                    setLoading(false);
+                    return;
+                  }
 
-      router.push("/resume-analysis");
-    } catch (error) {
-      console.error(error);
-      alert("Upload failed");
-    }
+                  localStorage.setItem("resumeText", data.extractedText);
 
-    setLoading(false);
-  }}
-  className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
->
-  {loading ? "Uploading..." : "Upload Resume"}
-</button>
+                  router.push("/resume-analysis");
+                } catch (error) {
+                  console.error(error);
+                  alert("Upload failed");
+                }
+
+                setLoading(false);
+              }}
+              disabled={loading}
+              className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
+            >
+              {loading ? "Uploading..." : "Upload Resume"}
+            </button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mt-8">
@@ -135,6 +140,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5">
             <h3 className="font-semibold mb-4">Top Skills</h3>
+
             <div className="flex flex-wrap gap-2">
               <SkillBadge skill="React" />
               <SkillBadge skill="Next.js" />
@@ -145,6 +151,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5">
             <p className="text-gray-400 text-sm">Recommended Role</p>
+
             <h3 className="text-2xl font-bold mt-2">
               Based on uploaded resume
             </h3>
@@ -152,6 +159,7 @@ export default function Home() {
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <h3 className="font-semibold mb-5">Interview Readiness</h3>
+
             <ProgressBar label="Technical" value={90} />
             <ProgressBar label="Communication" value={75} />
             <ProgressBar label="Confidence" value={82} />

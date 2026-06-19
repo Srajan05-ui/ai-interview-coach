@@ -120,6 +120,22 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+          <Link
+            href="/learning-plan"
+            className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold shadow-lg shadow-cyan-500/40 hover:scale-105 transition-all text-center"
+          >
+            Generate Learning Roadmap →
+          </Link>
+
+          <Link
+            href="/history"
+            className="inline-block bg-white/10 px-8 py-4 rounded-2xl font-bold hover:bg-white/20 text-center"
+          >
+            View History
+          </Link>
+        </div>
       </div>
     </main>
   );
