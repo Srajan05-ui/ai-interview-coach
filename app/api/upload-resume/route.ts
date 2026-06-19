@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 
 export async function POST(req: Request) {
   try {
+    console.log("NEW UPLOAD ROUTE RUNNING");
     const formData = await req.formData();
 
     const file = formData.get("file") as File;
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     if (!file) {
       return NextResponse.json(
         {
+          success: false,
           error: "No file uploaded",
         },
         {
@@ -25,13 +26,16 @@ export async function POST(req: Request) {
     let extractedText = "";
 
     // PDF
-    if (file.name.endsWith(".pdf")) {
+    if (file.name.toLowerCase().endsWith(".pdf")) {
+      const pdfParse = (await import("pdf-parse")).default;
+
       const pdfData = await pdfParse(buffer);
+
       extractedText = pdfData.text;
     }
 
     // DOCX
-    else if (file.name.endsWith(".docx")) {
+    else if (file.name.toLowerCase().endsWith(".docx")) {
       const result = await mammoth.extractRawText({
         buffer,
       });
@@ -39,11 +43,12 @@ export async function POST(req: Request) {
       extractedText = result.value;
     }
 
+    // Invalid file
     else {
       return NextResponse.json(
         {
-          error:
-            "Only PDF and DOCX files are supported",
+          success: false,
+          error: "Only PDF and DOCX files are supported",
         },
         {
           status: 400,
@@ -56,18 +61,13 @@ export async function POST(req: Request) {
       fileName: file.name,
       extractedText,
     });
-
   } catch (error) {
-    console.error(
-      "Resume Upload Error:",
-      error
-    );
+    console.error("Resume Upload Error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error:
-          "Failed to process resume",
+        error: "Failed to process resume",
       },
       {
         status: 500,
