@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
-    const { question, answer } = await req.json();
+    const { interview_id, question, answer } = await req.json();
 
     if (!question || !answer) {
       return NextResponse.json(
@@ -66,6 +66,7 @@ const text =
   .from("answers")
   .insert([
     {
+      interview_id,
       question,
       answer,
       score: evaluation.score,
