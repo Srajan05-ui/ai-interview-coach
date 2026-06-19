@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import DashboardCard from "@/components/DashboardCard";
@@ -5,6 +9,75 @@ import SkillBadge from "@/components/SkillBadge";
 import ProgressBar from "@/components/ProgressBar";
 
 export default function Home() {
+  const router = useRouter();
+
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleResumeUpload = async () => {
+    if (!resumeFile) {
+      alert("Please select a resume file first.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("resume", resumeFile);
+
+      const uploadResponse = await fetch("/api/upload-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      const resumeText =
+        uploadData.resumeText || uploadData.text || uploadData.extractedText;
+
+      if (!resumeText) {
+        alert("Resume text could not be extracted.");
+        return;
+      }
+
+      const analysisResponse = await fetch("/api/resume-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resumeText: resumeText,
+        }),
+      });
+
+      const analysisData = await analysisResponse.json();
+
+      localStorage.setItem("resumeAnalysis", JSON.stringify(analysisData));
+
+      const questionResponse = await fetch("/api/generate-questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          skills: analysisData.skills || [],
+        }),
+      });
+
+      const questionData = await questionResponse.json();
+
+      localStorage.setItem("interviewQuestions", JSON.stringify(questionData));
+
+      router.push("/resume-analysis");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Something went wrong while uploading resume.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-blue-500/20 blur-[130px]" />
@@ -27,8 +100,8 @@ export default function Home() {
             </h1>
 
             <p className="text-gray-400 text-lg max-w-2xl">
-              Get personalized interview questions, instant feedback, and a
-              roadmap to improve your skills.
+              Upload your resume, get AI-powered analysis, generate interview
+              questions, and improve with a personalized roadmap.
             </p>
 
             <p className="mt-4 inline-block rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm text-gray-300">
@@ -40,22 +113,30 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-4">📄 Upload Resume</h2>
 
             <p className="text-gray-400 mb-6">
-              Upload your resume to let MockMate AI generate a personalized
-              mock interview experience.
+              Select your PDF, DOC, or DOCX resume to start the MockMate AI
+              interview flow.
             </p>
 
             <input
               type="file"
               accept=".pdf,.doc,.docx"
+              onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
               className="w-full text-sm text-gray-300 mb-6"
             />
 
-            <Link
-              href="/resume-analysis"
-              className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
+            {resumeFile && (
+              <p className="text-sm text-cyan-300 mb-4">
+                Selected File: {resumeFile.name}
+              </p>
+            )}
+
+            <button
+              onClick={handleResumeUpload}
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
             >
-              Upload Resume
-            </Link>
+              {loading ? "Analyzing Resume..." : "Upload Resume"}
+            </button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mt-8">
