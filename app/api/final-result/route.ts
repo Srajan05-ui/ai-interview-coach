@@ -85,14 +85,21 @@ Generate final interview feedback in 3-4 lines.
       })
       .eq("id", interview_id);
 
-    return NextResponse.json({
-      interview_id,
-      totalQuestions: answers.length,
-      averageScore,
-      performance,
-      weakAreas,
-      finalFeedback,
-    });
+    const scoreOutOf100 = Math.round(averageScore * 10);
+
+     
+return NextResponse.json({
+  overallScore: scoreOutOf100,
+  technicalScore: scoreOutOf100,
+  communicationScore: scoreOutOf100,
+  strengthAreas: [],
+  weakAreas: weakAreas
+    ? weakAreas.split(",").map((item) => item.trim())
+    : [],
+  improvementSuggestions: [],
+  finalFeedback,
+});
+
   } catch (error) {
     console.error(error);
 

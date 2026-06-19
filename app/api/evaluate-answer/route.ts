@@ -47,10 +47,6 @@ Evaluate the answer and return ONLY valid JSON.
   ],
 });
  
-console.log(
-  "OPENROUTER RESPONSE:",
-  JSON.stringify(completion, null, 2)
-);
 
 const text =
   completion?.choices?.[0]?.message?.content || "";
@@ -79,7 +75,12 @@ const text =
       console.error(error);
     }
 
-    return NextResponse.json(evaluation);
+   return NextResponse.json({
+  score: evaluation.score,
+  feedback: evaluation.finalFeedback,
+  strengths: evaluation.strengths || [],
+  improvements: evaluation.suggestions || [],
+});
   } catch (error) {
     console.error(error);
 
