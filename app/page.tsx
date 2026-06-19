@@ -1,10 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import DashboardCard from "@/components/DashboardCard";
 import SkillBadge from "@/components/SkillBadge";
 import ProgressBar from "@/components/ProgressBar";
 
 export default function Home() {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
   return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-blue-500/20 blur-[130px]" />
@@ -45,17 +52,61 @@ export default function Home() {
             </p>
 
             <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className="w-full text-sm text-gray-300 mb-6"
-            />
+  type="file"
+  accept=".pdf,.doc,.docx"
+  className="w-full text-sm text-gray-300 mb-6"
+  onChange={(e) => {
+    if (e.target.files?.[0]) {
+      setFile(e.target.files[0]);
+    }
+  }}
+/>
 
-            <Link
-              href="/resume-analysis"
-              className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
-            >
-              Upload Resume
-            </Link>
+<button
+  onClick={async () => {
+    if (!file) {
+      alert("Please select a resume file");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (!data.success) {
+        alert(data.error || "Upload failed");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem(
+        "resumeText",
+        data.extractedText
+      );
+
+      router.push("/resume-analysis");
+    } catch (error) {
+      console.error(error);
+      alert("Upload failed");
+    }
+
+    setLoading(false);
+  }}
+  className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
+>
+  {loading ? "Uploading..." : "Upload Resume"}
+</button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mt-8">
