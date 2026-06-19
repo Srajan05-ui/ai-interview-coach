@@ -1,0 +1,96 @@
+import Link from "next/link";
+
+export default function ResumeAnalysisPage() {
+  return (
+    <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
+      <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-blue-500/20 blur-[130px]" />
+      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-cyan-400/20 blur-[130px]" />
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-4xl font-bold">📄 Resume Analysis</h1>
+            <p className="text-gray-400 mt-2">
+              MockMate AI analyzed your resume and extracted key insights.
+            </p>
+          </div>
+
+          <Link href="/" className="bg-white/10 px-4 py-2 rounded-xl hover:bg-white/20">
+            ← Dashboard
+          </Link>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <p className="text-gray-400 text-sm">Resume Score</p>
+            <h2 className="text-5xl font-bold text-cyan-300 mt-2">87/100</h2>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <p className="text-gray-400 text-sm">Experience Level</p>
+            <h2 className="text-3xl font-bold mt-2">Beginner</h2>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <p className="text-gray-400 text-sm">Recommended Role</p>
+            <h2 className="text-3xl font-bold mt-2">Frontend Developer</h2>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-semibold mb-4">Detected Skills</h3>
+
+            <div className="flex flex-wrap gap-3">
+              {["React", "Next.js", "TypeScript", "Tailwind CSS", "JavaScript", "HTML", "CSS"].map(
+                (skill) => (
+                  <span key={skill} className="bg-cyan-500/20 px-4 py-2 rounded-full">
+                    {skill}
+                  </span>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-semibold mb-4">Project Highlights</h3>
+
+            <ul className="space-y-3 text-gray-300">
+              <li>✅ Built responsive frontend pages</li>
+              <li>✅ Worked with Next.js App Router</li>
+              <li>✅ Used Tailwind CSS for modern UI</li>
+              <li>✅ Created reusable components</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
+          <h3 className="text-2xl font-semibold mb-4">Resume Summary</h3>
+
+          <p className="text-gray-300 leading-8">
+            The resume shows a strong interest in frontend development with
+            experience in React, Next.js, TypeScript, and Tailwind CSS. The
+            candidate should focus on improving API integration, testing, and
+            system design basics for better interview performance.
+          </p>
+        </div>
+
+        <div className="flex gap-4">
+          <Link
+            href="/interview"
+            className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold shadow-lg shadow-cyan-500/40 hover:scale-105 transition-all"
+          >
+            Generate Interview Questions →
+          </Link>
+
+          <Link
+            href="/"
+            className="bg-white/10 px-8 py-4 rounded-2xl font-bold hover:bg-white/20"
+          >
+            Upload Another Resume
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
