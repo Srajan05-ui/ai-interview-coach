@@ -42,7 +42,11 @@ export default function LearningPlanPage() {
         )
       );
 
-      setSuggestedSkills(areas);
+      Promise.resolve().then(() => {
+ Promise.resolve().then(() => {
+  setSuggestedSkills(areas);
+});
+});
     } catch (error) {
       console.error("Could not load weak areas:", error);
     }
@@ -156,6 +160,7 @@ export default function LearningPlanPage() {
             <p className="text-gray-400 mb-6">
               Focus area: {weakSkill}
             </p>
+            
 
             <div className="space-y-4">
               {roadmap.map((item, index) => (

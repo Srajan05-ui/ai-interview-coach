@@ -1,1 +1,1 @@
-export const MODEL = "openrouter/free";
+import { MODEL } from "@/lib/constants";

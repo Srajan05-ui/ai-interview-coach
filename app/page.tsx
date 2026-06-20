@@ -54,7 +54,7 @@ export default function Home() {
 
             <input
               type="file"
-              accept=".pdf,.doc,.docx"
+              accept="docx"
               className="w-full text-sm text-gray-300 mb-6"
               onChange={(e) => {
                 if (e.target.files?.[0]) {

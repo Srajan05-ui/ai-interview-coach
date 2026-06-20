@@ -13,6 +13,7 @@ export default function InterviewPage() {
   const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
+  const loadQuestions = async () => {
     const storedQuestions =
       localStorage.getItem("interviewQuestions") ||
       localStorage.getItem("questions");
@@ -24,10 +25,15 @@ export default function InterviewPage() {
         ? parsedQuestions
         : parsedQuestions.questions || [];
 
-      setQuestions(questionList);
-      setAnswers(Array(questionList.length).fill(""));
+      setTimeout(() => {
+        setQuestions(questionList);
+        setAnswers(Array(questionList.length).fill(""));
+      }, 0);
     }
-  }, []);
+  };
+
+  loadQuestions();
+}, []);
 
   const nextQuestion = () => {
     if (currentQuestion < questions.length - 1) {

@@ -18,18 +18,33 @@ export default function EvaluationPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedResults = localStorage.getItem("evaluationResults");
+  const loadResults = async () => {
+    const storedResults =
+      localStorage.getItem("evaluationResults");
 
     if (storedResults) {
       try {
-        setResults(JSON.parse(storedResults));
+        const parsedResults =
+          JSON.parse(storedResults);
+
+        setTimeout(() => {
+          setResults(parsedResults);
+        }, 0);
       } catch (error) {
-        console.error("Could not read evaluation results:", error);
+        console.error(
+          "Could not read evaluation results:",
+          error
+        );
       }
     }
 
-    setLoading(false);
-  }, []);
+    setTimeout(() => {
+      setLoading(false);
+    }, 0);
+  };
+
+  loadResults();
+}, []);
 
   if (loading) {
     return (

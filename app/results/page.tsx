@@ -16,14 +16,17 @@ type EvaluationItem = {
 export default function ResultsPage() {
   const [results, setResults] = useState<EvaluationItem[]>([]);
 
-  useEffect(() => {
-    const storedResults = localStorage.getItem("evaluationResults");
+ useEffect(() => {
+  const storedResults = localStorage.getItem("evaluationResults");
 
-    if (storedResults) {
-      setResults(JSON.parse(storedResults));
-    }
-  }, []);
+  if (storedResults) {
+    const parsedResults = JSON.parse(storedResults);
 
+    Promise.resolve().then(() => {
+      setResults(parsedResults);
+    });
+  }
+}, []);
   const averageScore =
     results.length > 0
       ? Math.round(
@@ -66,12 +69,8 @@ export default function ResultsPage() {
     )
   );
 
-  const combinedFeedback =
-    results.length > 0
-      ? results
-          .map((item, index) => `Q${index + 1}: ${item.feedback}`)
-          .join(" ")
-      : "Complete an interview to view your AI-generated performance analysis.";
+  
+  
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
@@ -86,6 +85,8 @@ export default function ResultsPage() {
               Your MockMate AI performance summary and improvement plan.
             </p>
           </div>
+          
+      
 
           <Link
             href="/"
