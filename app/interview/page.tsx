@@ -1,21 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function InterviewPage() {
-  const questions = [
-    "Explain the difference between React and Next.js.",
-    "What are React Hooks?",
-    "What is Server Side Rendering?",
-    "What is TypeScript and why is it useful?",
-    "Explain the Virtual DOM.",
-  ];
+  const [questions, setQuestions] = useState<string[]>([]);
 
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(
-    Array(questions.length).fill("")
-  );
+const [currentQuestion, setCurrentQuestion] = useState(0);
+
+const [answers, setAnswers] = useState<string[]>([]);
+
+useEffect(() => {
+  const storedQuestions =
+    localStorage.getItem("questions");
+
+  if (storedQuestions) {
+    const parsedQuestions =
+      JSON.parse(storedQuestions);
+
+    setQuestions(parsedQuestions);
+
+    setAnswers(
+      Array(parsedQuestions.length).fill("")
+    );
+  }
+}, []);
+
+  
 
   const nextQuestion = () => {
     if (currentQuestion < questions.length - 1) {
@@ -41,6 +52,15 @@ export default function InterviewPage() {
     console.log("All Answers:", answers);
     alert("Interview Submitted! Check browser console.");
   };
+  if (questions.length === 0) {
+  return (
+    <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+      <h1 className="text-3xl font-bold">
+        No Questions Generated Yet
+      </h1>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
