@@ -14,11 +14,11 @@ AI Interview Coach built using Next.js, OpenRouter, Supabase and Tailwind CSS.
 
 ## Team Members
 
-- Srajan – Project Lead, Integration, Deployment
 - Pratham – Question Generation API
 - Radha – Resume Analysis API
 - Nandini – Evaluation API, Database, Final Results
 - Prachitee – Frontend Development
+- Srajan –  Integration, Deployment
 
 ## Deployment
 
