@@ -64,6 +64,18 @@ export default function EvaluationPage() {
     results.reduce((total, item) => total + Number(item.score || 0), 0) /
       results.length
   );
+  const verdict =
+  averageScore >= 8
+    ? "Excellent Candidate"
+    : averageScore >= 6
+    ? "Good Candidate"
+    : "Needs Improvement";
+
+const technicalScore = Math.min(10, averageScore + 1);
+
+const communicationScore = averageScore;
+
+const confidenceScore = Math.min(10, averageScore + 0.5);
 
   const allStrengths = Array.from(
   new Set(
@@ -119,7 +131,7 @@ export default function EvaluationPage() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <p className="text-gray-400 text-sm">Overall Score</p>
             <h2 className="text-5xl font-bold text-cyan-300 mt-2">
@@ -140,8 +152,79 @@ export default function EvaluationPage() {
               Completed
             </h2>
           </div>
-        </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+  <p className="text-gray-400 text-sm">AI Verdict</p>
 
+  <h2
+    className={`text-2xl font-bold mt-4 ${
+      averageScore >= 8
+        ? "text-green-400"
+        : averageScore >= 6
+        ? "text-cyan-400"
+        : "text-red-400"
+    }`}
+  >
+    {verdict}
+  </h2>
+</div>
+        </div>
+<div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
+  <h2 className="text-2xl font-semibold mb-6">
+    Performance Breakdown
+  </h2>
+
+  <div className="space-y-5">
+
+    <div>
+      <div className="flex justify-between mb-2">
+        <span>Technical Skills</span>
+        <span>{technicalScore}/10</span>
+      </div>
+
+      <div className="w-full bg-gray-700 rounded-full h-3">
+        <div
+          className="bg-cyan-400 h-3 rounded-full"
+          style={{
+            width: `${technicalScore * 10}%`,
+          }}
+        />
+      </div>
+    </div>
+
+    <div>
+      <div className="flex justify-between mb-2">
+        <span>Communication</span>
+        <span>{communicationScore}/10</span>
+      </div>
+
+      <div className="w-full bg-gray-700 rounded-full h-3">
+        <div
+          className="bg-green-400 h-3 rounded-full"
+          style={{
+            width: `${communicationScore * 10}%`,
+          }}
+        />
+      </div>
+    </div>
+
+    <div>
+      <div className="flex justify-between mb-2">
+        <span>Confidence</span>
+        <span>{confidenceScore}/10</span>
+      </div>
+
+      <div className="w-full bg-gray-700 rounded-full h-3">
+        <div
+          className="bg-yellow-400 h-3 rounded-full"
+          style={{
+            width: `${confidenceScore * 10}%`,
+          }}
+        />
+      </div>
+    </div>
+
+  </div>
+</div>
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-6">
             Question-wise Evaluation
@@ -203,7 +286,20 @@ export default function EvaluationPage() {
             )}
           </div>
         </div>
+<div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
+  <h2 className="text-2xl font-semibold mb-4">
+    🤖 AI Recommendation
+  </h2>
 
+  <p className="text-gray-300 leading-8">
+    Based on your interview performance,
+    continue strengthening your technical
+    concepts and communication skills.
+    Focus on weak areas highlighted above
+    and complete the learning roadmap to
+    improve your interview readiness.
+  </p>
+</div>
         <div className="flex gap-4">
           <Link
             href="/results"
