@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function InterviewPage() {
-  const questions = [
-    "Explain the difference between React and Next.js.",
-    "What are React Hooks?",
-    "What is Server Side Rendering?",
-    "What is TypeScript and why is it useful?",
-    "Explain the Virtual DOM.",
-  ];
+  const router = useRouter();
 
+  const [questions, setQuestions] = useState<string[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(
-    Array(questions.length).fill("")
-  );
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [evaluating, setEvaluating] = useState(false);
+
+  useEffect(() => {
+    const storedQuestions = localStorage.getItem("interviewQuestions");
+
+    if (storedQuestions) {
+      const parsedQuestions = JSON.parse(storedQuestions);
+
+      const questionList = Array.isArray(parsedQuestions)
+        ? parsedQuestions
+        : parsedQuestions.questions || [];
+
+      setQuestions(questionList);
+      setAnswers(Array(questionList.length).fill(""));
+    }
+  }, []);
 
   const nextQuestion = () => {
     if (currentQuestion < questions.length - 1) {
@@ -37,10 +47,86 @@ export default function InterviewPage() {
     setAnswers(updatedAnswers);
   };
 
-  const submitInterview = () => {
-    console.log("All Answers:", answers);
-    alert("Interview Submitted! Check browser console.");
+  const submitInterview = async () => {
+    if (questions.length === 0) {
+      alert("No questions found. Please generate questions first.");
+      return;
+    }
+
+    const emptyAnswer = answers.some((answer) => !answer.trim());
+
+    if (emptyAnswer) {
+      alert("Please answer all questions before submitting.");
+      return;
+    }
+
+    try {
+      setEvaluating(true);
+
+      const evaluationResults = [];
+
+      for (let i = 0; i < questions.length; i++) {
+        const response = await fetch("/api/evaluate-answer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: questions[i],
+            answer: answers[i],
+          }),
+        });
+
+        const data = await response.json();
+
+        evaluationResults.push({
+          question: questions[i],
+          answer: answers[i],
+          score: data.score,
+          feedback: data.feedback,
+          weak_areas: data.weak_areas || [],
+          strengths: data.strengths || [],
+          improvements: data.improvements || [],
+        });
+      }
+
+      localStorage.setItem(
+        "evaluationResults",
+        JSON.stringify(evaluationResults)
+      );
+
+      router.push("/evaluation");
+    } catch (error) {
+      console.error(error);
+      alert("Evaluation failed. Please try again.");
+    } finally {
+      setEvaluating(false);
+    }
   };
+
+  if (questions.length === 0) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold mb-4">
+            🎤 MockMate Interview Session
+          </h1>
+
+          <p className="text-gray-400 mb-6">
+            No questions found. Please generate interview questions from Resume
+            Analysis first.
+          </p>
+
+          <Link
+            href="/resume-analysis"
+            className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold"
+          >
+            Go to Resume Analysis
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
@@ -124,9 +210,10 @@ export default function InterviewPage() {
 
               <button
                 onClick={submitInterview}
-                className="bg-gradient-to-r from-blue-500 to-cyan-400 px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
+                disabled={evaluating}
+                className="bg-gradient-to-r from-blue-500 to-cyan-400 px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
               >
-                Submit Interview
+                {evaluating ? "Evaluating..." : "Submit Interview"}
               </button>
             </div>
           </div>
