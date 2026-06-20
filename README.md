@@ -12,7 +12,7 @@ The project is built using Next.js, TypeScript, Tailwind CSS, OpenRouter AI mode
 
 ## Key Features
 
-- Resume Upload (DOCX/PDF)
+- Resume Upload (DOCX)
 - Resume Analysis and Skill Extraction
 - AI-Powered Interview Question Generation
 - Answer Evaluation and Scoring
