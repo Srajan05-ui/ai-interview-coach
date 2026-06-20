@@ -63,20 +63,26 @@ export default function InterviewPage() {
     }
 
     try {
-      setEvaluating(true);
+  setEvaluating(true);
 
-      const evaluationResults = [];
+  const interviewId =
+    localStorage.getItem("interviewId") || crypto.randomUUID();
 
-      for (let i = 0; i < questions.length; i++) {
+  localStorage.setItem("interviewId", interviewId);
+
+  const evaluationResults = [];
+
+  for (let i = 0; i < questions.length; i++) {
         const response = await fetch("/api/evaluate-answer", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            question: questions[i],
-            answer: answers[i],
-          }),
+  interview_id: interviewId,
+  question: questions[i],
+  answer: answers[i],
+}),
         });
 
         const data = await response.json();
