@@ -2,31 +2,32 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function InterviewPage() {
+  const router = useRouter();
+
   const [questions, setQuestions] = useState<string[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [evaluating, setEvaluating] = useState(false);
 
-const [currentQuestion, setCurrentQuestion] = useState(0);
+  useEffect(() => {
+    const storedQuestions =
+      localStorage.getItem("interviewQuestions") ||
+      localStorage.getItem("questions");
 
-const [answers, setAnswers] = useState<string[]>([]);
+    if (storedQuestions) {
+      const parsedQuestions = JSON.parse(storedQuestions);
 
-useEffect(() => {
-  const storedQuestions =
-    localStorage.getItem("questions");
+      const questionList = Array.isArray(parsedQuestions)
+        ? parsedQuestions
+        : parsedQuestions.questions || [];
 
-  if (storedQuestions) {
-    const parsedQuestions =
-      JSON.parse(storedQuestions);
-
-    setQuestions(parsedQuestions);
-
-    setAnswers(
-      Array(parsedQuestions.length).fill("")
-    );
-  }
-}, []);
-
-  
+      setQuestions(questionList);
+      setAnswers(Array(questionList.length).fill(""));
+    }
+  }, []);
 
   const nextQuestion = () => {
     if (currentQuestion < questions.length - 1) {
@@ -48,19 +49,91 @@ useEffect(() => {
     setAnswers(updatedAnswers);
   };
 
-  const submitInterview = () => {
-    console.log("All Answers:", answers);
-    alert("Interview Submitted! Check browser console.");
+  const submitInterview = async () => {
+    if (questions.length === 0) {
+      alert("No questions found. Please generate questions first.");
+      return;
+    }
+
+    const emptyAnswer = answers.some((answer) => !answer.trim());
+
+    if (emptyAnswer) {
+      alert("Please answer all questions before submitting.");
+      return;
+    }
+
+    try {
+  setEvaluating(true);
+
+  const interviewId =
+    localStorage.getItem("interviewId") || crypto.randomUUID();
+
+  localStorage.setItem("interviewId", interviewId);
+
+  const evaluationResults = [];
+
+  for (let i = 0; i < questions.length; i++) {
+        const response = await fetch("/api/evaluate-answer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+  interview_id: interviewId,
+  question: questions[i],
+  answer: answers[i],
+}),
+        });
+
+        const data = await response.json();
+
+        evaluationResults.push({
+          question: questions[i],
+          answer: answers[i],
+          score: data.score,
+          feedback: data.feedback,
+          weak_areas: data.weak_areas || [],
+          strengths: data.strengths || [],
+          improvements: data.improvements || [],
+        });
+      }
+
+      localStorage.setItem(
+        "evaluationResults",
+        JSON.stringify(evaluationResults)
+      );
+
+      router.push("/evaluation");
+    } catch (error) {
+      console.error(error);
+      alert("Evaluation failed. Please try again.");
+    } finally {
+      setEvaluating(false);
+    }
   };
+
   if (questions.length === 0) {
-  return (
-    <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
-      <h1 className="text-3xl font-bold">
-        No Questions Generated Yet
-      </h1>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center p-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">
+            No Questions Generated Yet
+          </h1>
+
+          <p className="text-gray-400 mb-6">
+            Please upload your resume and generate interview questions first.
+          </p>
+
+          <Link
+            href="/resume-analysis"
+            className="inline-block bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold"
+          >
+            Go to Resume Analysis
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
@@ -73,6 +146,7 @@ useEffect(() => {
             <h1 className="text-4xl font-bold">
               🎤 MockMate Interview Session
             </h1>
+
             <p className="text-gray-400 mt-2">
               Practice with AI-generated questions tailored to your resume.
             </p>
@@ -109,6 +183,7 @@ useEffect(() => {
           <p className="text-sm text-cyan-300 mb-3">
             Resume-Based Question
           </p>
+
           <h2 className="text-2xl font-semibold">
             {questions[currentQuestion]}
           </h2>
@@ -120,7 +195,7 @@ useEffect(() => {
           </label>
 
           <textarea
-            value={answers[currentQuestion]}
+            value={answers[currentQuestion] || ""}
             onChange={handleAnswerChange}
             placeholder="Type your response here..."
             className="w-full h-56 bg-black/30 border border-white/10 rounded-2xl p-4 outline-none"
@@ -144,9 +219,10 @@ useEffect(() => {
 
               <button
                 onClick={submitInterview}
-                className="bg-gradient-to-r from-blue-500 to-cyan-400 px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all"
+                disabled={evaluating}
+                className="bg-gradient-to-r from-blue-500 to-cyan-400 px-6 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all disabled:opacity-50"
               >
-                Submit Interview
+                {evaluating ? "Evaluating..." : "Submit Interview"}
               </button>
             </div>
           </div>
@@ -156,6 +232,7 @@ useEffect(() => {
           <h3 className="text-xl font-semibold mb-4">
             Stored Responses
           </h3>
+
           <pre className="text-sm text-gray-300 whitespace-pre-wrap">
             {JSON.stringify(answers, null, 2)}
           </pre>

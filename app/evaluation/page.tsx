@@ -1,23 +1,101 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type EvaluationItem = {
+  question: string;
+  answer: string;
+  score: number;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  weak_areas?: string[];
+};
+
 export default function EvaluationPage() {
-  const questionScores = [
-    {
-      question: "Explain the difference between React and Next.js.",
-      score: "8/10",
-      feedback: "Good explanation. Add more examples for better clarity.",
-    },
-    {
-      question: "What are React Hooks?",
-      score: "7/10",
-      feedback: "Basic idea is correct. Improve explanation of useState and useEffect.",
-    },
-    {
-      question: "What is Server Side Rendering?",
-      score: "9/10",
-      feedback: "Strong answer with good technical understanding.",
-    },
-  ];
+  const [results, setResults] = useState<EvaluationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const storedResults = localStorage.getItem("evaluationResults");
+
+    if (storedResults) {
+      try {
+        setResults(JSON.parse(storedResults));
+      } catch (error) {
+        console.error("Could not read evaluation results:", error);
+      }
+    }
+
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+        <h1 className="text-3xl font-bold">Loading evaluation...</h1>
+      </main>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex flex-col items-center justify-center p-8">
+        <h1 className="text-3xl font-bold mb-4">
+          No Evaluation Results Found
+        </h1>
+
+        <p className="text-gray-400 mb-6">
+          Please complete an interview first.
+        </p>
+
+        <Link
+          href="/interview"
+          className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold"
+        >
+          Go to Interview
+        </Link>
+      </main>
+    );
+  }
+
+  const averageScore = Math.round(
+    results.reduce((total, item) => total + Number(item.score || 0), 0) /
+      results.length
+  );
+
+  const allStrengths = Array.from(
+  new Set(
+    results.flatMap((item) => {
+      return Array.isArray(item.strengths)
+        ? item.strengths
+        : item.strengths
+        ? [item.strengths]
+        : [];
+    })
+  )
+);
+
+  const allImprovements = Array.from(
+  new Set(
+    results.flatMap((item) => {
+      const improvements = Array.isArray(item.improvements)
+        ? item.improvements
+        : item.improvements
+        ? [item.improvements]
+        : [];
+
+      const weakAreas = Array.isArray(item.weak_areas)
+        ? item.weak_areas
+        : item.weak_areas
+        ? [item.weak_areas]
+        : [];
+
+      return [...improvements, ...weakAreas];
+    })
+  )
+);
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
@@ -43,18 +121,24 @@ export default function EvaluationPage() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <p className="text-gray-400 text-sm">Technical Accuracy</p>
-            <h2 className="text-5xl font-bold text-cyan-300 mt-2">88%</h2>
+            <p className="text-gray-400 text-sm">Overall Score</p>
+            <h2 className="text-5xl font-bold text-cyan-300 mt-2">
+              {averageScore}/10
+            </h2>
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <p className="text-gray-400 text-sm">Communication</p>
-            <h2 className="text-5xl font-bold text-blue-400 mt-2">75%</h2>
+            <p className="text-gray-400 text-sm">Questions Evaluated</p>
+            <h2 className="text-5xl font-bold text-blue-400 mt-2">
+              {results.length}
+            </h2>
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <p className="text-gray-400 text-sm">Confidence</p>
-            <h2 className="text-5xl font-bold text-cyan-300 mt-2">82%</h2>
+            <p className="text-gray-400 text-sm">Interview Status</p>
+            <h2 className="text-3xl font-bold text-cyan-300 mt-4">
+              Completed
+            </h2>
           </div>
         </div>
 
@@ -64,23 +148,23 @@ export default function EvaluationPage() {
           </h2>
 
           <div className="space-y-5">
-            {questionScores.map((item, index) => (
+            {results.map((item, index) => (
               <div
                 key={index}
                 className="bg-white/5 border border-white/10 rounded-2xl p-5"
               >
                 <div className="flex justify-between gap-4 mb-3">
-                  <h3 className="font-semibold">
-                    Question {index + 1}
-                  </h3>
+                  <h3 className="font-semibold">Question {index + 1}</h3>
 
                   <span className="text-cyan-300 font-bold">
-                    {item.score}
+                    {item.score}/10
                   </span>
                 </div>
 
                 <p className="text-gray-300 mb-3">{item.question}</p>
-                <p className="text-gray-400 text-sm">{item.feedback}</p>
+                <p className="text-gray-400 text-sm">
+                  {item.feedback || "No feedback received."}
+                </p>
               </div>
             ))}
           </div>
@@ -92,11 +176,15 @@ export default function EvaluationPage() {
               Strength Summary
             </h3>
 
-            <ul className="space-y-3 text-gray-300">
-              <li>✅ Strong understanding of frontend fundamentals</li>
-              <li>✅ Good React and Next.js knowledge</li>
-              <li>✅ Clear technical reasoning in most answers</li>
-            </ul>
+            {allStrengths.length > 0 ? (
+              <ul className="space-y-3 text-gray-300">
+                {allStrengths.map((strength, index) => (
+                  <li key={index}>✅ {strength}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400">No strengths returned yet.</p>
+            )}
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
@@ -104,11 +192,15 @@ export default function EvaluationPage() {
               Improvement Suggestions
             </h3>
 
-            <ul className="space-y-3 text-gray-300">
-              <li>🎯 Add real-world examples while answering</li>
-              <li>🎯 Improve confidence and answer structure</li>
-              <li>🎯 Practice system design basics</li>
-            </ul>
+            {allImprovements.length > 0 ? (
+              <ul className="space-y-3 text-gray-300">
+                {allImprovements.map((improvement, index) => (
+                  <li key={index}>🎯 {improvement}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400">No improvements returned yet.</p>
+            )}
           </div>
         </div>
 
