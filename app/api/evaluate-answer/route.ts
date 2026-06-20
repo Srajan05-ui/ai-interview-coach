@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { openrouter } from "@/lib/openrouter";
 import { supabase } from "@/lib/supabase";
+import { MODEL } from "@/lib/constants";
 
 export async function POST(req: Request) {
   try {
@@ -38,7 +39,7 @@ Evaluate the answer and return ONLY valid JSON.
 `;
 
     const completion = await openrouter.chat.completions.create({
-  model: "google/gemma-4-31b-it:free",
+  model: MODEL,
   messages: [
     {
       role: "user",

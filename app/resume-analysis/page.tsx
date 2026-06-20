@@ -1,40 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type ResumeAnalysis = {
   skills?: string[];
   experience?: string;
   strengths?: string[];
-  summary?: string;
   weaknesses?: string[];
   suggestions?: string[];
+  summary?: string;
 };
 
 export default function ResumeAnalysisPage() {
   const router = useRouter();
 
+  const [loading, setLoading] = useState(true);
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const storedAnalysis = localStorage.getItem("resumeAnalysis");
+    const analyzeResume = async () => {
+      try {
+        const resumeText = localStorage.getItem("resumeText");
 
-    if (storedAnalysis) {
-      setAnalysis(JSON.parse(storedAnalysis));
-    }
+        if (!resumeText) {
+          setError("No resume found. Please upload a resume first.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch("/api/resume-analysis", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ resumeText }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          setError(data.error || "Analysis failed");
+          setLoading(false);
+          return;
+        }
+
+        setAnalysis(data.data);
+        localStorage.setItem("resumeAnalysis", JSON.stringify(data.data));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to analyze resume");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    analyzeResume();
   }, []);
 
   const generateQuestions = async () => {
-    const skillsForQuestions =
-  analysis?.skills && analysis.skills.length > 0
-    ? analysis.skills
-    : ["React", "Next.js", "TypeScript", "Tailwind CSS"];
+    if (!analysis?.skills || analysis.skills.length === 0) {
+      alert("No skills found to generate questions.");
+      return;
+    }
 
     try {
-      setLoadingQuestions(true);
+      setGeneratingQuestions(true);
 
       const response = await fetch("/api/generate-questions", {
         method: "POST",
@@ -42,42 +76,50 @@ export default function ResumeAnalysisPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          skills: skillsForQuestions,
+          skills: analysis.skills,
         }),
       });
 
       const data = await response.json();
 
-      localStorage.setItem(
-        "interviewQuestions",
-        JSON.stringify(data.questions || [])
-      );
+      const questions = data.questions || data.data?.questions || [];
+
+      if (!questions || questions.length === 0) {
+        alert("No questions were generated.");
+        return;
+      }
+
+      localStorage.setItem("interviewQuestions", JSON.stringify(questions));
+      localStorage.setItem("questions", JSON.stringify(questions));
 
       router.push("/interview");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to generate questions.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate interview questions.");
     } finally {
-      setLoadingQuestions(false);
+      setGeneratingQuestions(false);
     }
   };
 
-  const skills = analysis?.skills || [
-    "React",
-    "Next.js",
-    "TypeScript",
-    "Tailwind CSS",
-  ];
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+        <h1 className="text-3xl font-bold">Analyzing Resume...</h1>
+      </main>
+    );
+  }
 
-  const strengths = analysis?.strengths || [
-    "Good frontend fundamentals",
-    "Strong UI development skills",
-    "Beginner-friendly project experience",
-  ];
+  if (error) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex flex-col items-center justify-center gap-4">
+        <h1 className="text-2xl text-red-400">{error}</h1>
 
-  const summary =
-    analysis?.summary ||
-    "Your resume shows interest in frontend development and modern web technologies. MockMate AI will use these skills to generate personalized interview questions.";
+        <Link href="/" className="bg-cyan-500 px-6 py-3 rounded-xl">
+          Go Back
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#050816] text-white p-8 relative overflow-hidden">
@@ -88,8 +130,9 @@ export default function ResumeAnalysisPage() {
         <div className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-4xl font-bold">📄 Resume Analysis</h1>
+
             <p className="text-gray-400 mt-2">
-              MockMate AI analyzed your resume and extracted key insights.
+              AI generated analysis of your resume.
             </p>
           </div>
 
@@ -122,12 +165,12 @@ export default function ResumeAnalysisPage() {
 
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-semibold mb-4">Detected Skills</h3>
+            <h2 className="text-2xl font-bold mb-4">Skills</h2>
 
             <div className="flex flex-wrap gap-3">
-              {skills.map((skill) => (
+              {analysis?.skills?.map((skill, index) => (
                 <span
-                  key={skill}
+                  key={index}
                   className="bg-cyan-500/20 px-4 py-2 rounded-full"
                 >
                   {skill}
@@ -137,36 +180,60 @@ export default function ResumeAnalysisPage() {
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-semibold mb-4">Strengths</h3>
+            <h2 className="text-2xl font-bold mb-4">Strengths</h2>
 
-            <ul className="space-y-3 text-gray-300">
-              {strengths.map((strength) => (
-                <li key={strength}>✅ {strength}</li>
+            <ul className="space-y-2 text-gray-300">
+              {analysis?.strengths?.map((item, index) => (
+                <li key={index}>✅ {item}</li>
               ))}
             </ul>
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
-          <h3 className="text-2xl font-semibold mb-4">Resume Summary</h3>
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h2 className="text-2xl font-bold mb-4">Weaknesses</h2>
 
-          <p className="text-gray-300 leading-8">{summary}</p>
+            <ul className="space-y-2 text-gray-300">
+              {analysis?.weaknesses?.map((item, index) => (
+                <li key={index}>⚠️ {item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h2 className="text-2xl font-bold mb-4">Suggestions</h2>
+
+            <ul className="space-y-2 text-gray-300">
+              {analysis?.suggestions?.map((item, index) => (
+                <li key={index}>🚀 {item}</li>
+              ))}
+            </ul>
+          </div>
         </div>
+
+        {analysis?.summary && (
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Summary</h2>
+
+            <p className="text-gray-300 leading-8">{analysis.summary}</p>
+          </div>
+        )}
 
         <div className="flex gap-4">
           <button
             onClick={generateQuestions}
-            disabled={loadingQuestions}
-            className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold shadow-lg shadow-cyan-500/40 hover:scale-105 transition-all disabled:opacity-50"
+            disabled={generatingQuestions}
+            className="bg-gradient-to-r from-blue-500 to-cyan-400 px-8 py-4 rounded-2xl font-bold disabled:opacity-50"
           >
-            {loadingQuestions
+            {generatingQuestions
               ? "Generating Questions..."
               : "Generate Interview Questions →"}
           </button>
 
           <Link
             href="/"
-            className="bg-white/10 px-8 py-4 rounded-2xl font-bold hover:bg-white/20"
+            className="bg-white/10 px-8 py-4 rounded-2xl font-bold"
           >
             Upload Another Resume
           </Link>

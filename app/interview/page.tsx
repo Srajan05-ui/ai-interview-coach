@@ -13,7 +13,9 @@ export default function InterviewPage() {
   const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
-    const storedQuestions = localStorage.getItem("interviewQuestions");
+    const storedQuestions =
+      localStorage.getItem("interviewQuestions") ||
+      localStorage.getItem("questions");
 
     if (storedQuestions) {
       const parsedQuestions = JSON.parse(storedQuestions);
@@ -106,15 +108,14 @@ export default function InterviewPage() {
 
   if (questions.length === 0) {
     return (
-      <main className="min-h-screen bg-[#050816] text-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4">
-            🎤 MockMate Interview Session
+      <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center p-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">
+            No Questions Generated Yet
           </h1>
 
           <p className="text-gray-400 mb-6">
-            No questions found. Please generate interview questions from Resume
-            Analysis first.
+            Please upload your resume and generate interview questions first.
           </p>
 
           <Link
@@ -139,6 +140,7 @@ export default function InterviewPage() {
             <h1 className="text-4xl font-bold">
               🎤 MockMate Interview Session
             </h1>
+
             <p className="text-gray-400 mt-2">
               Practice with AI-generated questions tailored to your resume.
             </p>
@@ -175,6 +177,7 @@ export default function InterviewPage() {
           <p className="text-sm text-cyan-300 mb-3">
             Resume-Based Question
           </p>
+
           <h2 className="text-2xl font-semibold">
             {questions[currentQuestion]}
           </h2>
@@ -186,7 +189,7 @@ export default function InterviewPage() {
           </label>
 
           <textarea
-            value={answers[currentQuestion]}
+            value={answers[currentQuestion] || ""}
             onChange={handleAnswerChange}
             placeholder="Type your response here..."
             className="w-full h-56 bg-black/30 border border-white/10 rounded-2xl p-4 outline-none"
@@ -223,6 +226,7 @@ export default function InterviewPage() {
           <h3 className="text-xl font-semibold mb-4">
             Stored Responses
           </h3>
+
           <pre className="text-sm text-gray-300 whitespace-pre-wrap">
             {JSON.stringify(answers, null, 2)}
           </pre>
