@@ -61,7 +61,7 @@ The project is built using Next.js, TypeScript, Tailwind CSS, OpenRouter AI mode
 
 ## Deployment
 
-Live Project: https://ai-interview-coach-lp68.vercel.app/
+Live Project: https://ai-interview-coach-gold-psi.vercel.app/
 
 GitHub Repository: https://github.com/Srajan05-ui/ai-interview-coach
 
