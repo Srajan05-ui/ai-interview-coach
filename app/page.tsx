@@ -46,9 +46,12 @@ export default function Home() {
 
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/30 rounded-3xl p-8">
             <h2 className="text-2xl font-semibold mb-4">📄 Upload Resume</h2>
+            <p className="text-sm text-yellow-300 mb-4">
+  Only DOCX files are supported.
+</p>
 
             <p className="text-gray-400 mb-6">
-              Select your PDF, DOC, or DOCX resume to start the MockMate AI
+              Select your  DOCX resume to start the MockMate AI
               interview flow.
             </p>
 
